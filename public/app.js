@@ -28,13 +28,13 @@ const API = {
         return await res.json();
     },
 
-    /** Pass user chat intent to the backend Gemini AI logic */
-    async sendChatQuery(query) {
+    /** Pass user chat intent and the active dashboard mode to the backend Gemini AI logic */
+    async sendChatQuery(query, mode = 'fan') {
         try {
             const res = await fetch('/api/ai', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query })
+                body: JSON.stringify({ query, mode })
             });
             const data = await res.json();
             return { success: true, data };
@@ -87,13 +87,47 @@ const UI = {
         }
     },
 
+    /** Force visible global UI banners denoting active network partition crashes */
+    setConnectionError(message) {
+        const banner = document.getElementById('connection-error');
+        if (!banner) return;
+        if (message) {
+            banner.textContent = message;
+            banner.classList.add('visible');
+        } else {
+            banner.classList.remove('visible');
+        }
+    },
+
+    /** Dynamically toggles visually distinct capacity alerts explicitly onto the DOM */
+    setSafetyAlert(message) {
+        const alertBox = document.getElementById('safety-alert');
+        const alertMsg = document.getElementById('safety-alert-msg');
+        if (!alertBox || !alertMsg) return;
+
+        if (message) {
+            alertMsg.textContent = message;
+            alertBox.classList.remove('hidden');
+        } else {
+            alertBox.classList.add('hidden');
+        }
+    },
+
     /** Insert updated data points into a specific recommendation card */
     updateRecCard(cardId, itemData, type) {
         const card = document.getElementById(cardId);
-        if (!itemData) return;
+        if (!card) return;
 
         const nameEl = card.querySelector('.rec-name');
         const badgeEl = card.querySelector('.wait-badge');
+
+        if (!itemData) {
+            nameEl.textContent = 'Data Unavailable';
+            badgeEl.textContent = '--';
+            badgeEl.className = 'wait-badge';
+            card.setAttribute('aria-label', `${type} data is currently unavailable.`);
+            return;
+        }
 
         nameEl.textContent = itemData.name;
         
@@ -109,6 +143,10 @@ const UI = {
         const ul = document.getElementById(listId);
         ul.innerHTML = ''; // Wipe and re-draw list
         
+        if (!items || items.length === 0) {
+            ul.innerHTML = `<li class="status-item" style="color: var(--text-muted); font-size: 0.9rem;">No tracking data available.</li>`;
+            return;
+        }
         items.forEach(item => {
             const li = document.createElement('li');
             li.className = 'status-item';
@@ -152,6 +190,59 @@ const UI = {
 
     removeChatMessage(msgElement) {
         msgElement?.remove();
+    },
+
+    /** Appends a specifically labeled DOM container delineating AI outputs from User blobs */
+    appendAIStructuredMessage(data) {
+        const msg = document.createElement('div');
+        msg.className = `message ai ai-structured`;
+        msg.setAttribute('tabindex', '0'); 
+        
+        const buildSection = (label, text, cssClass) => {
+            if (!text || text === "N/A") return '';
+            return `<div class="ai-section ${cssClass}">
+                        <strong class="ai-label">${label}</strong>
+                        <span>${text}</span>
+                    </div>`;
+        };
+
+        const sparkIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="margin-right:4px;"><path d="M12 2L9 9H2L7 14L5 21L12 17L19 21L17 14L22 9H15L12 2Z"/></svg>`;
+        
+        const engineText = data.engine || "Gemini 1.5";
+        const engineClass = engineText.includes('Mock') ? 'mock-badge' : 'gemini-badge';
+
+        msg.innerHTML = `
+            <div class="ai-header" style="justify-content: space-between; width: 100%;">
+                <div>${sparkIcon} AI ${data.type || 'Response'}</div>
+                <span class="engine-badge ${engineClass}">${engineText}</span>
+            </div>
+            ${buildSection('Recommendation', data.recommendation, 'ai-rec')}
+            ${buildSection('Alternate', data.alternate, 'ai-alt')}
+            ${buildSection('Rationale', data.rationale, 'ai-rat')}
+            ${buildSection('Safety Note', data.safetyNote, 'ai-safe')}
+        `;
+        
+        msg.setAttribute('aria-label', `AI says: ${data.recommendation}. Rationale: ${data.rationale}`);
+        
+        this.elements.chatWindow.appendChild(msg);
+        this.elements.chatWindow.scrollTop = this.elements.chatWindow.scrollHeight;
+        
+        return msg;
+    },
+
+    /** Updates visually global tracker badges with explicit local pulse mechanics */
+    updateSyncTimestamp() {
+        const timeSpan = document.getElementById('sync-time');
+        const badge = document.getElementById('live-status-badge');
+        if (!timeSpan || !badge) return;
+
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour12: true, hour: 'numeric', minute: '2-digit', second: '2-digit' });
+        timeSpan.textContent = timeStr;
+
+        // Visual flash indicating dynamic refresh
+        badge.classList.add('refreshing');
+        setTimeout(() => badge.classList.remove('refreshing'), 600);
     },
 
     /** Quietly inject text into screen reader live queue without visible UI disruption */
@@ -224,24 +315,25 @@ const Controller = {
             UI.appendChatMessage('user', text);
             chatInput.value = '';
 
-            // Handle Backend processing
-            await this.processChatQuery(text);
+            // Handle Backend processing contextually based on Active Tab
+            const isOps = tabOps.classList.contains('active');
+            await this.processChatQuery(text, isOps ? 'ops' : 'fan');
         });
     },
 
     /** Execute the query against Gemini/Fallback and paint the responses onto UI */
-    async processChatQuery(text) {
+    async processChatQuery(text, mode) {
         const typingIndicator = UI.appendChatMessage('ai', 'Thinking...');
         
-        const result = await API.sendChatQuery(text);
+        const result = await API.sendChatQuery(text, mode);
         
         UI.removeChatMessage(typingIndicator);
         
-        if (result.success && result.data.response) {
-            UI.appendChatMessage('ai', result.data.response);
-            UI.announce('AI says: ' + result.data.response);
+        if (result.success && result.data.recommendation) {
+            UI.appendAIStructuredMessage(result.data);
+            UI.announce('AI says: ' + result.data.recommendation);
         } else {
-            const errorText = 'Sorry, I encountered an error.';
+            const errorText = 'Sorry, I encountered an error formatting the AI response.';
             UI.appendChatMessage('ai', errorText);
             UI.announce(errorText);
         }
@@ -263,25 +355,46 @@ const Controller = {
                 API.fetchVenueStatus()
             ]);
 
+            // Clear any lingering connection error banners
+            UI.setConnectionError(null);
+
             // Sync Dashboard Grids
-            UI.updateDashboardList('list-gates', status.gates);
-            UI.updateDashboardList('list-food', status.foodStalls);
-            UI.updateDashboardList('list-restrooms', status.restrooms);
+            UI.updateDashboardList('list-gates', status?.gates || []);
+            UI.updateDashboardList('list-food', status?.foodStalls || []);
+            UI.updateDashboardList('list-restrooms', status?.restrooms || []);
 
             // Sync Fan Top Picks
-            UI.updateRecCard('rec-gate', recs.bestGate, 'Gate');
-            UI.updateRecCard('rec-food', recs.bestFood, 'Food');
-            UI.updateRecCard('rec-restroom', recs.bestRestroom, 'Restroom');
+            UI.updateRecCard('rec-gate', recs?.bestGate, 'Gate');
+            UI.updateRecCard('rec-food', recs?.bestFood, 'Food');
+            UI.updateRecCard('rec-restroom', recs?.bestRestroom, 'Restroom');
 
             // Trigger accessibility announcement solely on context shifts
-            const currentRecIds = `${recs.bestGate?.id}-${recs.bestFood?.id}-${recs.bestRestroom?.id}`;
+            const currentRecIds = `${recs?.bestGate?.id}-${recs?.bestFood?.id}-${recs?.bestRestroom?.id}`;
             if (State.previousRecIds && State.previousRecIds !== currentRecIds) {
-                 UI.announce(`Recommendations updated: ${recs.bestGate.name} is now the fastest gate. ${recs.bestFood.name} is the quickest bite.`);
+                 UI.announce(`Recommendations updated: ${recs?.bestGate?.name || 'Gate'} is now the fastest gate. ${recs?.bestFood?.name || 'Food stall'} is the quickest bite.`);
             }
             State.previousRecIds = currentRecIds;
 
+            // Globally confirm tracking intervals are successfully executing across UI boundaries
+            UI.updateSyncTimestamp();
+
+            // Evaluate subtle Safety Alerts based on existing telemetry models natively mapping wait times strictly > 12 mins
+            const thresholdMs = 12 * 60 * 1000;
+            const allTelemetry = [...(status?.gates || []), ...(status?.foodStalls || []), ...(status?.restrooms || [])];
+            const congestedZones = allTelemetry.filter(item => item.waitTimeMs > thresholdMs);
+            
+            if (congestedZones.length > 0) {
+                const zoneNames = congestedZones.slice(0, 2).map(i => i.name).join(' and ');
+                let alertString = `High congestion detected near ${zoneNames}. Please allow extra time.`;
+                if (congestedZones.length > 2) alertString += ' Multiple other areas are also busy.';
+                UI.setSafetyAlert(alertString);
+            } else {
+                UI.setSafetyAlert(null);
+            }
+
         } catch (err) {
             console.error("Critical Background Polling Sync Failed:", err);
+            UI.setConnectionError("Unable to reach backend telemetry servers. Retrying in background...");
         }
     }
 };

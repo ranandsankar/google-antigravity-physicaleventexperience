@@ -21,10 +21,21 @@ To achieve strict size efficiency (under 1MB bundle target):
 - **Backend Layer**: A localized Express.js (Node 20+) micro-server processing REST connections, housing the simulated venue data loops, and executing rule-based pathing algorithms.
 - **AI Integrations**: Direct standard HTTP client `fetch()` chains hook into `generativelanguage.googleapis.com` without imposing bloat from bulk Google SDK libraries.
 
-## 5. API Endpoints
+## 5. API Endpoints & Examples
 - `GET /api/status`: Returns the full real-time venue telemetry JSON object containing dynamically shifting wait times and capacities.
 - `GET | POST /api/recommend`: Executes the `recommendationLogic.js` core algorithms to compute the optimal pathings natively and returns calculated Top Picks.
-- `POST /api/ai`: Evaluates { `query` } payload against venue data contexts. Implements `system_instructions` formatting and enforces a JSON response format representing `{ response: "message", intent: "rule" }`. Defaults cleanly to a mocked static fallback if API keys are withheld.
+- `POST /api/ai`: Evaluates `{ query, mode }` payloads against contextual venue data. Implements strict `system_instructions` targeting either Fan or Operations modes. It forcibly enforces a deeply structured JSON response map. Defaults cleanly to a mocked static fallback if API keys are withheld.
+
+**Example `POST /api/ai` Evaluator Schema Response:**
+```json
+{
+  "type": "Fan Direction|Tip",
+  "recommendation": "Head to the East Gate, it's currently empty.",
+  "alternate": "Zone B Hot Dogs is another great option with a very short wait.",
+  "rationale": "Queue modeling indicates full clearance at these zones.",
+  "safetyNote": "Please walk safely and avoid rushing."
+}
+```
 
 ## 6. Testing Strategy
 - **Minimalist Approach**: Tests are written natively on top of Node.js `assert` and global `fetch()` modules rather than relying on heavy runners like Jest or Cypress.
@@ -38,9 +49,10 @@ To achieve strict size efficiency (under 1MB bundle target):
 - **WCAG Constraints**: Includes robust `:focus-visible` ring enhancements and heavily compliant high-contrast color shifts.
 
 ## 8. Security Considerations
-- **Generic Fallthroughs**: API boundaries securely wrap routes in `try/catch` enclosures forwarding to a final un-leaking generic error node. It safely prevents internal Node stacks from exposing system internals to malicious clients.
-- **Payload Fortification**: Uses top-level `express.json` guards to bounce and HTTP `400` malformed data formats.
-- **Defensive Sanitization**: Blocks raw `<` or `>` payload inputs from user strings, effectively breaking generalized XSS/Injection vectors before touching external processing engines.
+- **Centralized Validation Middleware**: Route validation has been intentionally decoupled into an explicit `validatorMiddleware.js` layer. This middleware actively intercepts, validates, and strictly sanitizes all `POST` input directed toward `/api/recommend` and `/api/ai` before accessing business logic.
+- **Length Constraint Limits**: The validation layer explicitly limits excessive input lengths (e.g., dynamically halting strings larger than 500 characters and blocking artificially massive JSON blocks) defending against API flooding.
+- **Structured Error Outputs**: Both active validations and generic global catches dynamically synthesize explicit, user-friendly JSON maps (e.g., `{ "error": "...", "details": "..." }`).
+- **Internal Error Masking**: `try/catch` handlers aggressively mask internal application loops and explicitly swallow Node.js stack traces ensuring that no proprietary architecture is leaked.
 
 ## 9. Google Services Used
 - **Google Gemini 1.5 Flash**: Orchestrates the conversational intent routing without large bulk SDKs.

@@ -118,28 +118,30 @@ async function runTests() {
   });
 
   // API 3: POST /api/ai (Normal intent fallback)
-  await apiTest('API: POST /api/ai fallback returns text response for normal query', async () => {
+  await apiTest('API: POST /api/ai fallback returns structured JSON for normal query', async () => {
     const res = await fetch(`${baseUrl}/api/ai`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: 'Where is the food?' })
+      body: JSON.stringify({ query: 'Where is the food?', mode: 'fan' })
     });
     assert.strictEqual(res.status, 200, "Expected status 200");
     const data = await res.json();
-    assert.ok(data.response.includes('Where is the food?'), "AI didn't acknowledge the query");
+    assert.ok(data.recommendation.includes('Where is the food?'), "AI didn't acknowledge the query");
+    assert.strictEqual(data.type, 'Mock Fan Guide');
   });
 
-  // API 4: POST /api/ai (Edge Case: Unknown intent)
-  await apiTest('API: POST /api/ai fallback processes unknown intent gracefully', async () => {
+  // API 4: POST /api/ai (Edge Case: Unknown intent / Ops Router)
+  await apiTest('API: POST /api/ai fallback processes ops routing gracefully', async () => {
      const res = await fetch(`${baseUrl}/api/ai`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: 'asdfzxcv1234' })
+      body: JSON.stringify({ query: 'asdfzxcv1234', mode: 'ops' })
     });
     assert.strictEqual(res.status, 200, "Expected status 200");
     const data = await res.json();
-    assert.ok(typeof data.response === 'string'); // ensuring our fallback text returns correctly
-    assert.ok(data.response.includes('asdfzxcv1234'));
+    assert.ok(typeof data.recommendation === 'string'); // ensuring our fallback text returns correctly
+    assert.ok(data.recommendation.includes('asdfzxcv1234'));
+    assert.strictEqual(data.type, 'Mock Ops Alert');
   });
 
   // Cleanup

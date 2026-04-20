@@ -9,24 +9,39 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Accessibility Skip Link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
     <div class="app-container">
+        <div id="connection-error" class="connection-banner" aria-live="assertive"></div>
         <!-- Header -->
         <header role="banner">
             <div class="logo">
                 <span class="logo-icon" aria-hidden="true">🏟️</span>
                 <h1>VenueFlow <span class="highlight">AI</span></h1>
             </div>
-            <nav aria-label="Main Application Views">
-                <div role="tablist" class="nav-tabs" aria-label="Dashboard Views">
-                    <button id="btn-fan-view" class="nav-btn active" role="tab" aria-selected="true" aria-controls="view-fan" tabindex="0">Fan Assistant</button>
-                    <button id="btn-ops-view" class="nav-btn" role="tab" aria-selected="false" aria-controls="view-ops" tabindex="-1">Ops Dashboard</button>
+            <div class="header-controls">
+                <div class="live-status-badge" id="live-status-badge" aria-live="polite" aria-atomic="true">
+                    <span class="pulse-dot" id="pulse-dot" aria-hidden="true"></span>
+                    <span class="status-text">Live Data Updating • <span id="sync-time">--:--:--</span></span>
                 </div>
-            </nav>
+                <nav aria-label="Main Application Views">
+                    <div role="tablist" class="nav-tabs" aria-label="Dashboard Views">
+                        <button id="btn-fan-view" class="nav-btn active" role="tab" aria-selected="true" aria-controls="view-fan" tabindex="0">Fan Assistant</button>
+                        <button id="btn-ops-view" class="nav-btn" role="tab" aria-selected="false" aria-controls="view-ops" tabindex="-1">Ops Dashboard</button>
+                    </div>
+                </nav>
+            </div>
         </header>
 
         <main id="main-content" role="main">
             <!-- Screen reader announcer for dynamic updates -->
             <div id="sr-announcer" aria-live="polite" class="sr-only"></div>
+
+            <div id="safety-alert" class="safety-alert hidden" role="alert" aria-live="polite">
+                <span class="safety-icon" aria-hidden="true">⚠️</span>
+                <span id="safety-alert-msg">Elevated congestion detected securely.</span>
+            </div>
 
             <!-- FAN ASSISTANT VIEW -->
             <section id="view-fan" class="view active-view" role="tabpanel" aria-labelledby="btn-fan-view" tabindex="0">
@@ -100,6 +115,7 @@
         
         <footer role="contentinfo">
             <p>VenueFlow AI &copy; 2026. Accessible Event Experience.</p>
+            <p class="a11y-notice" style="margin-top: 8px; font-size: 0.75rem;"><strong>Accessibility:</strong> Actively supports semantic ARIA landmarks, complete mouseless keyboard traversal, and dynamic polite live-region screen reader hooks.</p>
         </footer>
     </div>
 
