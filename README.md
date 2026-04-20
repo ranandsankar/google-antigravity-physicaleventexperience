@@ -43,8 +43,12 @@ To achieve strict size efficiency (under 1MB bundle target):
 - **Defensive Sanitization**: Blocks raw `<` or `>` payload inputs from user strings, effectively breaking generalized XSS/Injection vectors before touching external processing engines.
 
 ## 9. Google Services Used
-- **Google Gemini 1.5 Flash**: Evaluates contextual constraints via strict REST protocols utilizing `system_instructions` and constrained `generationConfigs`.
-- **Google Cloud Run**: Configured via Dockerfile wrapper built strictly around Alpine Node.js 20, capable of direct `gcloud` provisioning.
+- **Google Gemini 1.5 Flash**: Orchestrates the conversational intent routing without large bulk SDKs.
+- **Google Cloud Run**: Configured via the `Dockerfile` built around Alpine Node.js 20, capable of single-instruction container rollouts.
+
+## 10. Gemini Integration and Fallback Behavior
+VenueFlow AI natively supports contextual AI fallback capabilities. By interacting via Google's `generativelanguage.googleapis.com` JSON REST API, the application avoids large package.json bloating.
+If the `GEMINI_API_KEY` is omitted from configurations, the `/api/ai` endpoint gracefully catches the payload and bypasses standard Google fetch protocols—returning a hardcoded, fully formatted offline mock response string. This allows for immediate zero-config testing upon cloning.
 
 ## 10. Assumptions
 1. We assume mock data behaviors effectively substitute for what would be real-world venue IoT webhook integrations.
