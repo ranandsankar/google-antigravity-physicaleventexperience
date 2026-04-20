@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VenueFlow AI - Fan Assistant & Operations</title>
+    <!-- Modern Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <span class="logo-icon">🏟️</span>
+                <h1>VenueFlow <span class="highlight">AI</span></h1>
+            </div>
+            <nav>
+                <button id="btn-fan-view" class="nav-btn active">Fan Assistant</button>
+                <button id="btn-ops-view" class="nav-btn">Ops Dashboard</button>
+            </nav>
+        </header>
+
+        <main>
+            <!-- FAN ASSISTANT VIEW -->
+            <section id="view-fan" class="view active-view">
+                <div class="hero">
+                    <h2>Welcome to the Arena</h2>
+                    <p>Let AI guide you to the shortest lines and best experiences.</p>
+                </div>
+
+                <div class="recommendations">
+                    <h3>Current Top Picks</h3>
+                    <div class="cards-container">
+                        <div class="card" id="rec-gate">
+                            <div class="card-icon">🚪</div>
+                            <h4>Fastest Gate</h4>
+                            <p class="rec-name">Loading...</p>
+                            <span class="wait-badge">-- min wait</span>
+                        </div>
+                        <div class="card" id="rec-food">
+                            <div class="card-icon">🍔</div>
+                            <h4>Quickest Bite</h4>
+                            <p class="rec-name">Loading...</p>
+                            <span class="wait-badge">-- min wait</span>
+                        </div>
+                        <div class="card" id="rec-restroom">
+                            <div class="card-icon">🚾</div>
+                            <h4>Open Restroom</h4>
+                            <p class="rec-name">Loading...</p>
+                            <span class="wait-badge">-- min wait</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ai-assistant">
+                    <h3>Venue AI Assistant</h3>
+                    <div id="chat-window" class="chat-window">
+                        <div class="message ai">Hi! I am VenueFlow AI. Ask me about wait times, finding your seat, or anything else!</div>
+                    </div>
+                    <form id="chat-form" class="chat-input-area">
+                        <input type="text" id="chat-input" placeholder="E.g., Which gate has the shortest line?" required autocomplete="off">
+                        <button type="submit">Send</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- OPERATIONS DASHBOARD VIEW -->
+            <section id="view-ops" class="view">
+                <div class="ops-header">
+                    <h2>Live Venue Status</h2>
+                    <span class="live-indicator">● LIVE</span>
+                </div>
+                
+                <div class="dashboard-grid">
+                    <!-- Gates -->
+                    <div class="dash-panel">
+                        <h3>Gates Traffic</h3>
+                        <ul id="list-gates" class="status-list"></ul>
+                    </div>
+                    <!-- Food -->
+                    <div class="dash-panel">
+                        <h3>Food Concessions</h3>
+                        <ul id="list-food" class="status-list"></ul>
+                    </div>
+                    <!-- Restrooms -->
+                    <div class="dash-panel">
+                        <h3>Restrooms</h3>
+                        <ul id="list-restrooms" class="status-list"></ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
