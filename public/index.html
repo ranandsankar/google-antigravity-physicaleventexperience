@@ -11,87 +11,96 @@
 <body>
     <div class="app-container">
         <!-- Header -->
-        <header>
+        <header role="banner">
             <div class="logo">
-                <span class="logo-icon">🏟️</span>
+                <span class="logo-icon" aria-hidden="true">🏟️</span>
                 <h1>VenueFlow <span class="highlight">AI</span></h1>
             </div>
-            <nav>
-                <button id="btn-fan-view" class="nav-btn active">Fan Assistant</button>
-                <button id="btn-ops-view" class="nav-btn">Ops Dashboard</button>
+            <nav aria-label="Main Application Views">
+                <div role="tablist" class="nav-tabs" aria-label="Dashboard Views">
+                    <button id="btn-fan-view" class="nav-btn active" role="tab" aria-selected="true" aria-controls="view-fan" tabindex="0">Fan Assistant</button>
+                    <button id="btn-ops-view" class="nav-btn" role="tab" aria-selected="false" aria-controls="view-ops" tabindex="-1">Ops Dashboard</button>
+                </div>
             </nav>
         </header>
 
-        <main>
+        <main id="main-content" role="main">
+            <!-- Screen reader announcer for dynamic updates -->
+            <div id="sr-announcer" aria-live="polite" class="sr-only"></div>
+
             <!-- FAN ASSISTANT VIEW -->
-            <section id="view-fan" class="view active-view">
+            <section id="view-fan" class="view active-view" role="tabpanel" aria-labelledby="btn-fan-view" tabindex="0">
                 <div class="hero">
                     <h2>Welcome to the Arena</h2>
                     <p>Let AI guide you to the shortest lines and best experiences.</p>
                 </div>
 
-                <div class="recommendations">
-                    <h3>Current Top Picks</h3>
+                <section class="recommendations" aria-labelledby="recs-heading">
+                    <h3 id="recs-heading">Current Top Picks</h3>
                     <div class="cards-container">
-                        <div class="card" id="rec-gate">
-                            <div class="card-icon">🚪</div>
+                        <div class="card" id="rec-gate" tabindex="0" aria-label="Loading Fastest Gate">
+                            <div class="card-icon" aria-hidden="true">🚪</div>
                             <h4>Fastest Gate</h4>
-                            <p class="rec-name">Loading...</p>
-                            <span class="wait-badge">-- min wait</span>
+                            <p class="rec-name" aria-hidden="true">Loading...</p>
+                            <span class="wait-badge" aria-hidden="true">-- min wait</span>
                         </div>
-                        <div class="card" id="rec-food">
-                            <div class="card-icon">🍔</div>
+                        <div class="card" id="rec-food" tabindex="0" aria-label="Loading Quickest Bite">
+                            <div class="card-icon" aria-hidden="true">🍔</div>
                             <h4>Quickest Bite</h4>
-                            <p class="rec-name">Loading...</p>
-                            <span class="wait-badge">-- min wait</span>
+                            <p class="rec-name" aria-hidden="true">Loading...</p>
+                            <span class="wait-badge" aria-hidden="true">-- min wait</span>
                         </div>
-                        <div class="card" id="rec-restroom">
-                            <div class="card-icon">🚾</div>
+                        <div class="card" id="rec-restroom" tabindex="0" aria-label="Loading Open Restroom">
+                            <div class="card-icon" aria-hidden="true">🚾</div>
                             <h4>Open Restroom</h4>
-                            <p class="rec-name">Loading...</p>
-                            <span class="wait-badge">-- min wait</span>
+                            <p class="rec-name" aria-hidden="true">Loading...</p>
+                            <span class="wait-badge" aria-hidden="true">-- min wait</span>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <div class="ai-assistant">
-                    <h3>Venue AI Assistant</h3>
-                    <div id="chat-window" class="chat-window">
-                        <div class="message ai">Hi! I am VenueFlow AI. Ask me about wait times, finding your seat, or anything else!</div>
+                <section class="ai-assistant" aria-labelledby="ai-heading">
+                    <h3 id="ai-heading">Venue AI Assistant</h3>
+                    <div id="chat-window" class="chat-window" role="log" aria-live="polite" aria-relevant="additions" aria-label="Chat messages logs">
+                        <div class="message ai" tabindex="0">Hi! I am VenueFlow AI. Ask me about wait times, finding your seat, or anything else!</div>
                     </div>
-                    <form id="chat-form" class="chat-input-area">
-                        <input type="text" id="chat-input" placeholder="E.g., Which gate has the shortest line?" required autocomplete="off">
-                        <button type="submit">Send</button>
+                    <form id="chat-form" class="chat-input-area" aria-label="Chat Input Form">
+                        <input type="text" id="chat-input" placeholder="E.g., Which gate has the shortest line?" required autocomplete="off" aria-label="Ask VenueFlow AI a question">
+                        <button type="submit" aria-label="Send Message to Venue AI">Send</button>
                     </form>
-                </div>
+                </section>
             </section>
 
             <!-- OPERATIONS DASHBOARD VIEW -->
-            <section id="view-ops" class="view">
+            <section id="view-ops" class="view" role="tabpanel" aria-labelledby="btn-ops-view" tabindex="0" hidden>
                 <div class="ops-header">
-                    <h2>Live Venue Status</h2>
-                    <span class="live-indicator">● LIVE</span>
+                    <h2 id="ops-heading">Live Venue Status</h2>
+                    <span class="live-indicator" aria-hidden="true">● LIVE</span>
                 </div>
                 
                 <div class="dashboard-grid">
                     <!-- Gates -->
-                    <div class="dash-panel">
-                        <h3>Gates Traffic</h3>
-                        <ul id="list-gates" class="status-list"></ul>
-                    </div>
+                    <section class="dash-panel" aria-labelledby="ops-gates">
+                        <h3 id="ops-gates">Gates Traffic</h3>
+                        <ul id="list-gates" class="status-list" aria-label="Gates live status"></ul>
+                    </section>
                     <!-- Food -->
-                    <div class="dash-panel">
-                        <h3>Food Concessions</h3>
-                        <ul id="list-food" class="status-list"></ul>
-                    </div>
+                    <section class="dash-panel" aria-labelledby="ops-food">
+                        <h3 id="ops-food">Food Concessions</h3>
+                        <ul id="list-food" class="status-list" aria-label="Food stalls live status"></ul>
+                    </section>
                     <!-- Restrooms -->
-                    <div class="dash-panel">
-                        <h3>Restrooms</h3>
-                        <ul id="list-restrooms" class="status-list"></ul>
-                    </div>
+                    <section class="dash-panel" aria-labelledby="ops-restrooms">
+                        <h3 id="ops-restrooms">Restrooms</h3>
+                        <ul id="list-restrooms" class="status-list" aria-label="Restrooms live status"></ul>
+                    </section>
                 </div>
             </section>
         </main>
+        
+        <footer role="contentinfo">
+            <p>VenueFlow AI &copy; 2026. Accessible Event Experience.</p>
+        </footer>
     </div>
 
     <script src="app.js"></script>

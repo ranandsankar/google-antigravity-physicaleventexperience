@@ -1,51 +1,103 @@
 # VenueFlow AI
 
-A lightweight full-stack web application designed to improve the physical event experience at large sporting venues. It provides real-time AI-driven recommendations for gates, food stalls, and restrooms, as well as an operational dashboard to monitor venue congestion.
+**Challenge Name & Vertical**  
+Physical Event Experience (Vertical: Sports & Entertainment / Smart Venues)
 
-## Features
-- **Fan Assistant UI**: Receive dynamic recommendations on the fastest pathways and least crowded facilities.
-- **Venue AI Assistant**: Ask questions and get intelligent text responses either powered by a mock fallback or an actual Gemini Large Language Model.
-- **Operations Dashboard**: View simulated live tracking of crowd densities across venue zones.
-- **Lightweight**: Zero frontend build steps (vanilla HTML/CSS/JS) to keep repository size minimal. Designed to run on Google Cloud Run.
+---
 
-## Local Setup
+## 1. Problem Statement
+Large-scale live sporting events and physical venues suffer from extreme micro-congestion. Fans routinely encounter massive bottlenecks at specific gates, food stalls, and restrooms, resulting in degraded user experiences, missed event moments, and localized operational hazards—even when identical facilities in other venue zones are completely empty.
 
-### 1. Install dependencies
-```bash
-npm install
-```
+## 2. Target Users
+- **Event Attendees (Fans):** Seeking quick, frictionless guidance to the fastest facilities and shortest lines so they do not miss the event.
+- **Venue Operators:** Needing a unified high-level dashboard to securely monitor crowd density metrics across physical zones in real-time.
 
-### 2. Configuration
-Copy the `.env.example` file to create a `.env` file:
-```bash
-cp .env.example .env
-```
-Inside `.env`, you can provide a `GEMINI_API_KEY`. If left blank, the AI Assistant will fall back to local mock responses.
+## 3. Solution Overview
+VenueFlow AI is a seamlessly lightweight full-stack web application designed to democratize venue telemetry. Through a unified interface, fans get access to continuously computing "Top Picks" (shortest lines algorithmically derived from wait times and capacity) and an interactive **Venue AI Assistant** capable of interpreting custom fan requests. Concurrently, operations teams get a live dashboard detailing percentage-based capacity burdens.
 
-### 3. Run the App
-Start the Express server:
-```bash
-npm start
-```
-By default, the server runs on `http://localhost:8080`.
+## 4. Architecture Overview
+To achieve strict size efficiency (under 1MB bundle target):
+- **Frontend Layer**: Zero-build-step Vanilla JavaScript engineered via isolated Namespaces (`State`, `UI`, `API`, `Controller`), coupled with raw CSS parsing for a beautiful glassmorphic experience.
+- **Backend Layer**: A localized Express.js (Node 20+) micro-server processing REST connections, housing the simulated venue data loops, and executing rule-based pathing algorithms.
+- **AI Integrations**: Direct standard HTTP client `fetch()` chains hook into `generativelanguage.googleapis.com` without imposing bloat from bulk Google SDK libraries.
 
-### 4. Run Tests
-Verify the recommendation logic unit tests execute safely:
-```bash
-npm test
-```
+## 5. API Endpoints
+- `GET /api/status`: Returns the full real-time venue telemetry JSON object containing dynamically shifting wait times and capacities.
+- `GET | POST /api/recommend`: Executes the `recommendationLogic.js` core algorithms to compute the optimal pathings natively and returns calculated Top Picks.
+- `POST /api/ai`: Evaluates { `query` } payload against venue data contexts. Implements `system_instructions` formatting and enforces a JSON response format representing `{ response: "message", intent: "rule" }`. Defaults cleanly to a mocked static fallback if API keys are withheld.
 
-## Deployment to Google Cloud Run
-This project includes a `Dockerfile` optimized for Cloud Run. 
+## 6. Testing Strategy
+- **Minimalist Approach**: Tests are written natively on top of Node.js `assert` and global `fetch()` modules rather than relying on heavy runners like Jest or Cypress.
+- **Unit Logic Coverage**: Exhaustively verifies bounded wait computations, edge-cases for missing segments, and zero-length contingencies.
+- **Integration API Suite**: Programmatically hoists a random-port server proxy to simulate network boundary requests verifying `GET` schemas, expected HTTP `200` boundaries, and AI fallback parsing. Can be executed seamlessly via `npm test`.
 
-1. **Build the container**
+## 7. Accessibility Features
+- **Semantic DOM & Landmarks**: Implements fully explicit `<header>`, `<main>`, `<section>`, and `<nav>` landmarks.
+- **Keyboard Traversal**: Natively intercepts `keydown` logic across the navigation tabs, deploying a mathematically stable roving `tabindex` framework allowing purely mouseless operation and `Arrow` key focus toggles.
+- **Screen Reader Hooks**: Deploys an isolated `.sr-only` mounting node (`aria-live="polite"`) restricting chatter so that the screen reader is only pinged when algorithm outputs distinctly alter, rather than on every arbitrary 5-second datastream poll.
+- **WCAG Constraints**: Includes robust `:focus-visible` ring enhancements and heavily compliant high-contrast color shifts.
+
+## 8. Security Considerations
+- **Generic Fallthroughs**: API boundaries securely wrap routes in `try/catch` enclosures forwarding to a final un-leaking generic error node. It safely prevents internal Node stacks from exposing system internals to malicious clients.
+- **Payload Fortification**: Uses top-level `express.json` guards to bounce and HTTP `400` malformed data formats.
+- **Defensive Sanitization**: Blocks raw `<` or `>` payload inputs from user strings, effectively breaking generalized XSS/Injection vectors before touching external processing engines.
+
+## 9. Google Services Used
+- **Google Gemini 1.5 Flash**: Evaluates contextual constraints via strict REST protocols utilizing `system_instructions` and constrained `generationConfigs`.
+- **Google Cloud Run**: Configured via Dockerfile wrapper built strictly around Alpine Node.js 20, capable of direct `gcloud` provisioning.
+
+## 10. Assumptions
+1. We assume mock data behaviors effectively substitute for what would be real-world venue IoT webhook integrations.
+2. Web platforms accurately reflect mobile-first CSS media queries when handled gracefully.
+3. Users operate Modern Browsers equipped with ES6 execution layers.
+
+---
+
+## Local Setup Steps
+
+1. **Install Local Dependencies**
    ```bash
-   docker build -t venueflow-ai .
+   npm install
    ```
-2. **Push to Google Container Registry or Artifact Registry**
+
+2. **Configuration Settings**
+   Generate your secrets file payload:
    ```bash
-   docker tag venueflow-ai gcr.io/YOUR_PROJECT_ID/venueflow-ai
-   docker push gcr.io/YOUR_PROJECT_ID/venueflow-ai
+   cp .env.example .env
    ```
-3. **Deploy**
-   Deploy via the Google Cloud console or using `gcloud run deploy`. Ensure to expose port `8080` (which is standard for Cloud Run).
+   Provide your `GEMINI_API_KEY` to unlock AI routing. *(If left blank, the app relies safely on hardcoded mock engines).*
+
+3. **Start Service Node**
+   ```bash
+   npm start
+   ```
+   Navigate to `http://localhost:8080/`.
+
+---
+
+## Cloud Run Deployment Steps
+
+VenueFlow AI natively supports frictionless Google Cloud deployment. 
+
+1. **Environment Authentication**
+   Ensure the Google Cloud CLI `gcloud` commands are bootstrapped securely on your machine:
+   ```bash
+   gcloud auth login
+   gcloud config set project YOUR_PROJECT_ID
+   ```
+
+2. **Commit Pipeline Container**
+   Leverage direct-from-source build operations to circumvent manual Docker registry pushes:
+   ```bash
+   gcloud run deploy venueflow-ai --source . --port 8080 --allow-unauthenticated
+   ```
+
+3. **Configure the AI Node**
+   Within your standard Google Cloud UI Web Console -> Cloud Run -> `venueflow-ai` -> *Edit & Deploy Revision* -> **Variables & Secrets**: Add your mapped `GEMINI_API_KEY`.
+
+---
+
+## Future Improvements
+- **WebSocket Protocol Shifts**: Replacing repetitive HTTP 5-second interval loops with a true bidirectional WebSockets layer would greatly reduce network handshakes.
+- **Authenticated Identity Routing**: Integrating generic login procedures to split the interface natively at domain load rather than CSS toggle constraints.
+- **GPS Triangulation**: Enhancing the core algorithms manually to penalize paths structurally based on physical GPS distance to the user coordinates rather than raw wait-time.
